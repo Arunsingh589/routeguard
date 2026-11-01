@@ -67,8 +67,14 @@ export default function App() {
   }, []);
 
   // Perform Route Calculation
-  const handleCalculateRoutes = async () => {
-    if (!origin || !destination) {
+  const handleCalculateRoutes = async (overrideParams = null) => {
+    const orig = overrideParams?.origin || origin;
+    const dest = overrideParams?.destination || destination;
+    const weight = overrideParams?.loadWeightLbs !== undefined ? overrideParams.loadWeightLbs : loadWeightLbs;
+    const interval = overrideParams?.samplingIntervalMiles !== undefined ? overrideParams.samplingIntervalMiles : samplingIntervalMiles;
+    const depTime = overrideParams?.departureTime || departureTime;
+
+    if (!orig || !dest) {
       setErrorMsg('Please select both an Origin and a Destination.');
       return;
     }
@@ -78,11 +84,11 @@ export default function App() {
 
     try {
       const results = await analyzeRoutes({
-        origin,
-        destination,
-        departureTime,
-        loadWeightLbs,
-        samplingIntervalMiles,
+        origin: orig,
+        destination: dest,
+        departureTime: depTime,
+        loadWeightLbs: weight,
+        samplingIntervalMiles: interval,
       });
 
       setAnalysisResults(results);

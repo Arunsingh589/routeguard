@@ -111,11 +111,23 @@ export default function RouteConfigPanel({
     setDestination(preset.destination);
     setOriginQuery(preset.origin.label);
     setDestQuery(preset.destination.label);
+    const weight = preset.suggested_load_weight || loadWeightLbs;
+    const interval = preset.default_interval || samplingIntervalMiles;
     if (preset.suggested_load_weight) {
       setLoadWeightLbs(preset.suggested_load_weight);
     }
     if (preset.default_interval) {
       setSamplingIntervalMiles(preset.default_interval);
+    }
+
+    // Auto-calculate on preset click for instant feedback
+    if (typeof onCalculate === 'function') {
+      onCalculate({
+        origin: preset.origin,
+        destination: preset.destination,
+        loadWeightLbs: weight,
+        samplingIntervalMiles: interval,
+      });
     }
   };
 
