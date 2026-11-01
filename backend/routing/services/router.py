@@ -3,7 +3,7 @@ import requests
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple
 from .weather import fetch_weather_for_checkpoints, fetch_corridor_forecast_matrix
-from .risk_calculator import evaluate_checkpoint_risk, RISK_ORDER
+from .risk_calculator import evaluate_checkpoint_risk
 from .recommender import rank_routes
 
 EARTH_RADIUS_MILES = 3958.8
@@ -41,8 +41,6 @@ def fetch_osrm_route(coords_str: str) -> List[Dict[str, Any]]:
 def generate_fallback_geometry(start_lat: float, start_lon: float, end_lat: float, end_lon: float, curve_factor: float) -> List[List[float]]:
     coords = []
     num_points = 50
-    mid_lat = (start_lat + end_lat) / 2.0
-    mid_lon = (start_lon + end_lon) / 2.0
     dx = end_lon - start_lon
     dy = end_lat - start_lat
     perp_dx = -dy * curve_factor
@@ -121,7 +119,6 @@ def calculate_route_risk_profile(
     enriched_checkpoints = []
     num_pts = len(checkpoints_with_weather)
 
-    # Compute segment distance represented by each checkpoint
     segment_lengths = []
     if num_pts <= 1:
         segment_lengths = [total_distance_miles]
@@ -139,7 +136,6 @@ def calculate_route_risk_profile(
                 seg = (dists[i + 1] - dists[i - 1]) / 2.0
             segment_lengths.append(max(0.1, seg))
 
-        # Scale so exact sum equals total_distance_miles
         total_segs = sum(segment_lengths)
         if total_segs > 0:
             scale = total_distance_miles / total_segs
@@ -195,16 +191,12 @@ def generate_three_routes(
     coords_direct = f"{start_lon:.5f},{start_lat:.5f};{end_lon:.5f},{end_lat:.5f}"
     raw_osrm_routes = fetch_osrm_route(coords_direct)
 
-    default_names = [
-        "Primary Interstate Highway",
-        "Northern Bypass Corridor",
-        "Southern Commercial Transit",
-    ]
+    default_names = ["Route 1 (Primary)", "Route 2 (Alternate)", "Route 3 (Bypass)"]
 
     built_routes_raw = []
     if raw_osrm_routes:
         for idx, r in enumerate(raw_osrm_routes[:3]):
-            name = default_names[idx] if idx < len(default_names) else f"Highway Option {idx + 1}"
+            name = default_names[idx] if idx < len(default_names) else f"Route {idx + 1}"
             built_routes_raw.append({
                 "name": name,
                 "geometry": r["geometry"]["coordinates"],
@@ -224,7 +216,7 @@ def generate_three_routes(
             if via_routes:
                 r = via_routes[0]
                 idx = len(built_routes_raw)
-                name = default_names[idx] if idx < len(default_names) else f"Alternate Route {idx + 1}"
+                name = default_names[idx] if idx < len(default_names) else f"Route {idx + 1}"
                 built_routes_raw.append({
                     "name": name,
                     "geometry": r["geometry"]["coordinates"],
@@ -235,7 +227,7 @@ def generate_three_routes(
     if len(built_routes_raw) < 3:
         straight_dist = haversine_miles(start_lat, start_lon, end_lat, end_lon)
         curves = [0.0, 0.15, -0.15]
-        labels = ["Primary Interstate Highway", "Northern Bypass Corridor", "Southern Commercial Transit"]
+        labels = ["Route 1 (Direct)", "Route 2 (Northern)", "Route 3 (Southern)"]
         for i in range(len(built_routes_raw), 3):
             factor = curves[i]
             geom = generate_fallback_geometry(start_lat, start_lon, end_lat, end_lon, factor)
@@ -281,7 +273,7 @@ def generate_three_routes(
 
         route_entry = {
             "id": f"route_{idx + 1}",
-            "name": r_raw.get("name", f"Option {idx + 1}"),
+            "name": r_raw.get("name", f"Route {idx + 1}"),
             "distance_miles": round(dist_mi, 1),
             "duration_seconds": round(dur_s, 0),
             "duration_formatted": f"{hours}h {minutes}m",

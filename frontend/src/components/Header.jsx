@@ -1,51 +1,20 @@
 import React from 'react';
-import { Truck, ShieldCheck, HelpCircle, Layers, Zap } from 'lucide-react';
+import { Truck } from 'lucide-react';
 
-export default function Header({ onOpenRubric, onOpenGuide }) {
+export default function Header() {
   return (
     <header className="app-header">
       <div className="brand-wrapper">
-        <div className="brand-icon">
-          <Truck size={20} color="#ffffff" />
-        </div>
+        <Truck size={22} color="#38bdf8" />
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <h1 className="brand-title" style={{ fontSize: '1.18rem', margin: 0 }}>
-              RouteGuard
-            </h1>
-            <span style={{
-              fontSize: '0.68rem',
-              fontWeight: 700,
-              background: 'rgba(56, 189, 248, 0.15)',
-              color: '#38bdf8',
-              border: '1px solid rgba(56, 189, 248, 0.35)',
-              padding: '2px 6px',
-              borderRadius: 4,
-              letterSpacing: '0.04em',
-            }}>
-              PRO
-            </span>
-          </div>
-          <div className="brand-subtitle">
-            Weather-Aware Truck Freight Routing Engine
-          </div>
+          <span className="brand-title">RouteGuard</span>
+          <span className="brand-subtitle" style={{ marginLeft: 8 }}>
+            Weather-Aware Truck Routing
+          </span>
         </div>
       </div>
-
-      <div className="header-actions">
-        <div className="live-badge" title="Connected to Open-Meteo & OSRM APIs">
-          <span className="pulse-dot"></span>
-          <span>Live Meteorology &amp; Routing Active</span>
-        </div>
-
-        <button
-          onClick={onOpenRubric}
-          className="btn-glass"
-          title="View Weather & Load Risk Rules"
-        >
-          <ShieldCheck size={16} color="#38bdf8" />
-          <span>Risk Rubric</span>
-        </button>
+      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+        Live OSRM &amp; Open-Meteo Integration
       </div>
     </header>
   );

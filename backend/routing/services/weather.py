@@ -1,7 +1,7 @@
 import math
 import requests
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from .risk_calculator import evaluate_checkpoint_risk
 
 OPEN_METEO_BASE = "https://api.open-meteo.com/v1/forecast"
@@ -61,11 +61,9 @@ def fetch_weather_for_checkpoints(checkpoints: List[Dict[str, Any]]) -> List[Dic
                     idx = times.index(target_iso)
                 elif times and parsed_eta:
                     try:
-                        # Find closest hour
                         best_diff = float("inf")
                         for t_idx, t_str in enumerate(times):
                             t_dt = datetime.fromisoformat(t_str)
-                            # Compare naive or aware
                             if parsed_eta.tzinfo is not None and t_dt.tzinfo is None:
                                 t_dt = t_dt.replace(tzinfo=timezone.utc)
                             elif parsed_eta.tzinfo is None and t_dt.tzinfo is not None:

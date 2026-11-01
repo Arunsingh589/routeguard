@@ -1,4 +1,4 @@
-from typing import Dict, Any, Tuple
+from typing import Dict, Any
 
 RISK_ORDER = {
     "Low": 1,
@@ -63,10 +63,6 @@ def evaluate_checkpoint_risk(
     final_risk = base_risk
     applied_rule = None
 
-    # Load-specific and Severe Wind Rules:
-    # 1. Wind >= 55 mph -> No Travel for any load
-    # 2. Wind 45-54 mph + > 30,000 lb -> No Travel
-    # 3. Wind 35-44 mph + > 40,000 lb -> Severe
     if wind_mph >= 55.0:
         final_risk = "No Travel"
         applied_rule = "Wind >= 55 mph: No Travel for any load"
@@ -78,15 +74,13 @@ def evaluate_checkpoint_risk(
             final_risk = "Severe"
             applied_rule = "Wind 35-44 mph + Load > 40,000 lb: Elevated to Severe"
 
-    numeric_risk = RISK_ORDER[final_risk]
-
     return {
         "wind_risk": wind_risk,
         "rain_risk": rain_risk,
         "snow_risk": snow_risk,
         "base_risk": base_risk,
         "final_risk": final_risk,
-        "numeric_risk": numeric_risk,
+        "numeric_risk": RISK_ORDER[final_risk],
         "applied_rule": applied_rule,
         "is_no_travel": final_risk == "No Travel",
     }
