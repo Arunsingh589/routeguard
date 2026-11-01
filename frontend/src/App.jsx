@@ -6,9 +6,11 @@ import CheckpointTimeline from './components/CheckpointTimeline';
 import HeatmapTimelineSlider from './components/HeatmapTimelineSlider';
 import MapViewer from './components/MapViewer';
 import { fetchPresets, analyzeRoutes } from './api';
+import { SlidersHorizontal, Map as MapIcon } from 'lucide-react';
 
 export default function App() {
   const [presets, setPresets] = useState([]);
+  const [mobileTab, setMobileTab] = useState('routes');
 
   const [origin, setOrigin] = useState({
     city: 'Chicago',
@@ -79,6 +81,9 @@ export default function App() {
       if (results.routes && results.routes.length > 0) {
         setSelectedRouteId(results.metadata?.recommended_route_id || results.routes[0].id);
       }
+      if (window.innerWidth <= 768) {
+        setMobileTab('map');
+      }
     } catch (err) {
       setErrorMsg(err.message || 'Failed to calculate routes.');
     } finally {
@@ -96,10 +101,10 @@ export default function App() {
 
   return (
     <div className="app-container">
-      <Header />
+      <Header mobileTab={mobileTab} setMobileTab={setMobileTab} />
 
       <div className="main-content">
-        <div className="sidebar-panel">
+        <div className={`sidebar-panel ${mobileTab === 'routes' ? 'mobile-active' : ''}`}>
           <div className="sidebar-inner">
             {errorMsg && (
               <div style={{
@@ -137,6 +142,9 @@ export default function App() {
                 onSelectRoute={(id) => {
                   setSelectedRouteId(id);
                   setSelectedCheckpoint(null);
+                  if (window.innerWidth <= 768) {
+                    setMobileTab('map');
+                  }
                 }}
               />
             )}
@@ -145,7 +153,12 @@ export default function App() {
               <CheckpointTimeline
                 checkpoints={currentRoute.checkpoints}
                 selectedCheckpointIndex={selectedCheckpoint?.index}
-                onSelectCheckpoint={(cp) => setSelectedCheckpoint(cp)}
+                onSelectCheckpoint={(cp) => {
+                  setSelectedCheckpoint(cp);
+                  if (window.innerWidth <= 768) {
+                    setMobileTab('map');
+                  }
+                }}
               />
             )}
           </div>
@@ -161,6 +174,7 @@ export default function App() {
             showHeatmap={showHeatmap}
             origin={origin}
             destination={destination}
+            isMobileView={mobileTab === 'map'}
           />
 
           {analysisResults?.corridor_forecast_matrix && (
@@ -172,6 +186,35 @@ export default function App() {
               departureTime={departureTime}
             />
           )}
+
+          {/* Floating Mobile Pill Switcher */}
+          <div className="mobile-nav-toggle" style={{
+            position: 'absolute',
+            top: 14,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.45)',
+          }}>
+            <button
+              type="button"
+              className="mobile-tab-btn"
+              onClick={() => setMobileTab('routes')}
+              style={{
+                background: 'rgba(13, 20, 36, 0.95)',
+                color: '#38bdf8',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                padding: '6px 14px',
+                fontSize: '0.74rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 5,
+              }}
+            >
+              <SlidersHorizontal size={12} />
+              <span>Trip Options &amp; List</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -31,6 +31,25 @@ function MapBoundsUpdater({ routes, selectedRoute }) {
   return null;
 }
 
+function MapResizeHandler({ isMobileView }) {
+  const map = useMap();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [map, isMobileView]);
+
+  useEffect(() => {
+    const onResize = () => map.invalidateSize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [map]);
+
+  return null;
+}
+
 function WeatherHeatmapLayer({ corridorMatrix, forecastHour, showHeatmap }) {
   const map = useMap();
   const heatLayerRef = useRef(null);
@@ -148,6 +167,7 @@ export default function MapViewer({
   showHeatmap,
   origin,
   destination,
+  isMobileView,
 }) {
   const mapRef = useRef(null);
   const selectedRoute = routes?.find((r) => r.id === selectedRouteId) || routes?.[0];
@@ -185,6 +205,7 @@ export default function MapViewer({
         />
 
         <MapBoundsUpdater routes={routes} selectedRoute={selectedRoute} />
+        <MapResizeHandler isMobileView={isMobileView} />
 
         <WeatherHeatmapLayer
           corridorMatrix={corridorMatrix}

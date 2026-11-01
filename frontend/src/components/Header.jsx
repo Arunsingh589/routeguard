@@ -1,7 +1,7 @@
 import React from 'react';
 import { Truck } from 'lucide-react';
 
-export default function Header() {
+export default function Header({ mobileTab, setMobileTab }) {
   return (
     <header className="app-header">
       <div className="brand-wrapper">
@@ -15,6 +15,24 @@ export default function Header() {
           </span>
         </div>
       </div>
+
+      <div className="mobile-nav-toggle">
+        <button
+          type="button"
+          className={`mobile-tab-btn ${mobileTab === 'routes' ? 'active' : ''}`}
+          onClick={() => setMobileTab('routes')}
+        >
+          Trip Plan
+        </button>
+        <button
+          type="button"
+          className={`mobile-tab-btn ${mobileTab === 'map' ? 'active' : ''}`}
+          onClick={() => setMobileTab('map')}
+        >
+          Map View
+        </button>
+      </div>
+
       <div style={{
         display: 'flex',
         alignItems: 'center',
