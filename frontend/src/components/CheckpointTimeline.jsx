@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wind, CloudRain, Snowflake } from 'lucide-react';
+import { Wind, CloudRain, Snowflake, Thermometer } from 'lucide-react';
 
 export default function CheckpointTimeline({
   checkpoints,
@@ -19,9 +19,12 @@ export default function CheckpointTimeline({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8' }}>
-        Checkpoints &amp; Weather ({checkpoints.length} samples)
+    <div className="panel-card" style={{ padding: 14 }}>
+      <div className="panel-title" style={{ marginBottom: 8 }}>
+        <span>Checkpoint Weather Timeline</span>
+        <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 400 }}>
+          {checkpoints.length} sampled points
+        </span>
       </div>
 
       <div className="timeline-list">
@@ -33,33 +36,38 @@ export default function CheckpointTimeline({
               className="timeline-row"
               onClick={() => onSelectCheckpoint && onSelectCheckpoint(cp)}
               style={{
-                borderColor: isSelected ? '#3b82f6' : undefined,
-                background: isSelected ? 'rgba(59, 130, 246, 0.1)' : undefined,
+                borderColor: isSelected ? '#0ea5e9' : undefined,
+                background: isSelected ? 'rgba(14, 165, 233, 0.12)' : undefined,
               }}
             >
               <div>
                 <div style={{ fontWeight: 600, color: '#f8fafc' }}>
-                  Mile {cp.distance_from_start_miles} &bull; <span style={{ color: '#94a3b8', fontWeight: 400 }}>{cp.eta_formatted}</span>
+                  Mile {cp.distance_from_start_miles} &bull;{' '}
+                  <span style={{ color: '#94a3b8', fontWeight: 400 }}>
+                    {cp.eta_formatted}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 2, fontSize: '0.72rem', color: '#cbd5e1' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Wind size={11} color="#38bdf8" /> {cp.wind_mph} mph
+                <div style={{ display: 'flex', gap: 10, marginTop: 3, fontSize: '0.74rem', color: '#cbd5e1' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <Wind size={12} color="#38bdf8" /> {cp.wind_mph} mph
                   </span>
                   {cp.rain_in_hr > 0 && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 2, color: '#60a5fa' }}>
-                      <CloudRain size={11} /> {cp.rain_in_hr} in/h
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#60a5fa' }}>
+                      <CloudRain size={12} /> {cp.rain_in_hr} in/h
                     </span>
                   )}
                   {cp.snow_in_hr > 0 && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 2, color: '#a5b4fc' }}>
-                      <Snowflake size={11} /> {cp.snow_in_hr} in/h
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#a5b4fc' }}>
+                      <Snowflake size={12} /> {cp.snow_in_hr} in/h
                     </span>
                   )}
-                  <span>{cp.temp_f}&deg;F</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#94a3b8' }}>
+                    <Thermometer size={12} /> {cp.temp_f}&deg;F
+                  </span>
                 </div>
                 {cp.applied_rule && (
-                  <div style={{ fontSize: '0.68rem', color: '#fb923c', marginTop: 2 }}>
-                    {cp.applied_rule}
+                  <div style={{ fontSize: '0.68rem', color: '#fb923c', marginTop: 3 }}>
+                    &bull; {cp.applied_rule}
                   </div>
                 )}
               </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, ArrowRightLeft, Loader2, Navigation } from 'lucide-react';
+import { ArrowRightLeft, Loader2, Navigation, Calendar, Scale, MapPin } from 'lucide-react';
 import { searchLocations } from '../api';
 
 export default function RouteConfigPanel({
@@ -57,7 +57,7 @@ export default function RouteConfigPanel({
       const res = await searchLocations(originQuery);
       setOriginResults(res);
       setShowOriginDropdown(true);
-    }, 250);
+    }, 240);
     return () => clearTimeout(timer);
   }, [originQuery, origin]);
 
@@ -70,7 +70,7 @@ export default function RouteConfigPanel({
       const res = await searchLocations(destQuery);
       setDestResults(res);
       setShowDestDropdown(true);
-    }, 250);
+    }, 240);
     return () => clearTimeout(timer);
   }, [destQuery, destination]);
 
@@ -107,194 +107,222 @@ export default function RouteConfigPanel({
   };
 
   return (
-    <div className="form-section">
-      {/* Optional Preset Quick Dropdown */}
-      {presets && presets.length > 0 && (
-        <div>
-          <label className="input-label">Sample Corridor</label>
+    <div className="panel-card">
+      <div className="panel-title">
+        <span>Trip Configuration</span>
+        {presets && presets.length > 0 && (
           <select
             className="input-box"
+            style={{ width: 'auto', padding: '4px 8px', fontSize: '0.74rem' }}
             onChange={handleSelectPreset}
             defaultValue=""
           >
-            <option value="" disabled>Choose a sample corridor...</option>
+            <option value="" disabled>Load Sample Corridor...</option>
             {presets.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.origin.city} &rarr; {p.destination.city} ({p.name})
+                {p.origin.city} &rarr; {p.destination.city}
               </option>
             ))}
           </select>
-        </div>
-      )}
-
-      {/* Origin & Destination Inputs */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, position: 'relative' }}>
-        <div ref={originRef} style={{ position: 'relative' }}>
-          <label className="input-label">Origin</label>
-          <input
-            type="text"
-            className="input-box"
-            placeholder="Search origin city or hub..."
-            value={originQuery}
-            onChange={(e) => {
-              setOriginQuery(e.target.value);
-              setShowOriginDropdown(true);
-            }}
-            onFocus={() => {
-              if (originResults.length > 0) setShowOriginDropdown(true);
-            }}
-          />
-
-          {showOriginDropdown && originResults.length > 0 && (
-            <div className="autocomplete-dropdown">
-              {originResults.map((r, i) => (
-                <div
-                  key={i}
-                  className="autocomplete-item"
-                  onClick={() => {
-                    setOrigin(r);
-                    setOriginQuery(r.label);
-                    setShowOriginDropdown(false);
-                  }}
-                >
-                  <strong>{r.city}</strong>{r.state ? `, ${r.state}` : ''}
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{r.label}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <button
-            type="button"
-            onClick={handleSwap}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#3b82f6',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              fontSize: '0.72rem',
-              padding: '2px 6px',
-            }}
-          >
-            <ArrowRightLeft size={12} />
-            <span>Swap</span>
-          </button>
-        </div>
-
-        <div ref={destRef} style={{ position: 'relative' }}>
-          <label className="input-label">Destination</label>
-          <input
-            type="text"
-            className="input-box"
-            placeholder="Search destination city or hub..."
-            value={destQuery}
-            onChange={(e) => {
-              setDestQuery(e.target.value);
-              setShowDestDropdown(true);
-            }}
-            onFocus={() => {
-              if (destResults.length > 0) setShowDestDropdown(true);
-            }}
-          />
-
-          {showDestDropdown && destResults.length > 0 && (
-            <div className="autocomplete-dropdown">
-              {destResults.map((r, i) => (
-                <div
-                  key={i}
-                  className="autocomplete-item"
-                  onClick={() => {
-                    setDestination(r);
-                    setDestQuery(r.label);
-                    setShowDestDropdown(false);
-                  }}
-                >
-                  <strong>{r.city}</strong>{r.state ? `, ${r.state}` : ''}
-                  <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{r.label}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
-      {/* Departure Date/Time */}
-      <div>
-        <label className="input-label">Departure Date &amp; Time</label>
-        <input
-          type="datetime-local"
-          className="input-box"
-          value={departureTime}
-          onChange={(e) => setDepartureTime(e.target.value)}
-        />
-      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* Origin & Destination with connected route guide */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, position: 'relative' }}>
+          <div ref={originRef} style={{ position: 'relative' }}>
+            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              Origin
+            </label>
+            <input
+              type="text"
+              className="input-box"
+              placeholder="Enter origin city or freight hub..."
+              value={originQuery}
+              onChange={(e) => {
+                setOriginQuery(e.target.value);
+                setShowOriginDropdown(true);
+              }}
+              onFocus={() => {
+                if (originResults.length > 0) setShowOriginDropdown(true);
+              }}
+            />
 
-      {/* Load Weight */}
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <label className="input-label">Load Weight (lbs)</label>
-          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#38bdf8' }}>
-            {Number(loadWeightLbs).toLocaleString()} lbs
-          </span>
-        </div>
-        <input
-          type="range"
-          min="5000"
-          max="80000"
-          step="1000"
-          value={loadWeightLbs}
-          onChange={(e) => setLoadWeightLbs(Number(e.target.value))}
-        />
-        {Number(loadWeightLbs) > 30000 && (
-          <div style={{ fontSize: '0.7rem', color: '#fb923c', marginTop: 2 }}>
-            {Number(loadWeightLbs) > 40000
-              ? 'Load > 40,000 lbs: 35-44 mph wind triggers Severe'
-              : 'Load > 30,000 lbs: 45-54 mph wind triggers No Travel'}
+            {showOriginDropdown && originResults.length > 0 && (
+              <div className="autocomplete-dropdown">
+                {originResults.map((r, i) => (
+                  <div
+                    key={i}
+                    className="autocomplete-item"
+                    onClick={() => {
+                      setOrigin(r);
+                      setOriginQuery(r.label);
+                      setShowOriginDropdown(false);
+                    }}
+                  >
+                    <strong style={{ color: '#ffffff' }}>{r.city}</strong>{r.state ? `, ${r.state}` : ''}
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{r.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Sampling Interval */}
-      <div>
-        <label className="input-label">Weather Sampling Interval</label>
-        <div className="segmented-control">
-          {[10, 25, 50].map((intVal) => (
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '-2px 0' }}>
             <button
-              key={intVal}
               type="button"
-              className={`segmented-button ${Number(samplingIntervalMiles) === intVal ? 'active' : ''}`}
-              onClick={() => setSamplingIntervalMiles(intVal)}
+              onClick={handleSwap}
+              style={{
+                background: 'rgba(15, 23, 42, 0.7)',
+                border: '1px solid rgba(148, 163, 184, 0.15)',
+                color: '#38bdf8',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                fontSize: '0.72rem',
+                padding: '3px 8px',
+                borderRadius: 6,
+              }}
             >
-              Every {intVal} miles
+              <ArrowRightLeft size={11} />
+              <span>Swap Origin / Dest</span>
             </button>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Submit Button */}
-      <button
-        type="button"
-        className="btn-primary"
-        onClick={() => onCalculate()}
-        disabled={isLoading || !origin || !destination}
-      >
-        {isLoading ? (
-          <>
-            <Loader2 size={16} className="spin-animation" />
-            <span>Calculating 3 Routes...</span>
-          </>
-        ) : (
-          <>
-            <Navigation size={16} />
-            <span>Calculate Routes</span>
-          </>
-        )}
-      </button>
+          <div ref={destRef} style={{ position: 'relative' }}>
+            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block' }} />
+              Destination
+            </label>
+            <input
+              type="text"
+              className="input-box"
+              placeholder="Enter destination city or freight hub..."
+              value={destQuery}
+              onChange={(e) => {
+                setDestQuery(e.target.value);
+                setShowDestDropdown(true);
+              }}
+              onFocus={() => {
+                if (destResults.length > 0) setShowDestDropdown(true);
+              }}
+            />
+
+            {showDestDropdown && destResults.length > 0 && (
+              <div className="autocomplete-dropdown">
+                {destResults.map((r, i) => (
+                  <div
+                    key={i}
+                    className="autocomplete-item"
+                    onClick={() => {
+                      setDestination(r);
+                      setDestQuery(r.label);
+                      setShowDestDropdown(false);
+                    }}
+                  >
+                    <strong style={{ color: '#ffffff' }}>{r.city}</strong>{r.state ? `, ${r.state}` : ''}
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{r.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Departure Time */}
+        <div>
+          <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Calendar size={12} color="#38bdf8" />
+            Departure Date &amp; Time
+          </label>
+          <input
+            type="datetime-local"
+            className="input-box"
+            value={departureTime}
+            onChange={(e) => setDepartureTime(e.target.value)}
+          />
+        </div>
+
+        {/* Load Weight Slider */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <label className="input-label" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Scale size={12} color="#38bdf8" />
+              Truck Load Weight
+            </label>
+            <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#38bdf8' }}>
+              {Number(loadWeightLbs).toLocaleString()} lbs
+            </span>
+          </div>
+          <input
+            type="range"
+            min="5000"
+            max="80000"
+            step="1000"
+            value={loadWeightLbs}
+            onChange={(e) => setLoadWeightLbs(Number(e.target.value))}
+            style={{ margin: '6px 0' }}
+          />
+          {Number(loadWeightLbs) > 30000 && (
+            <div style={{
+              fontSize: '0.72rem',
+              color: '#f97316',
+              background: 'rgba(249, 115, 22, 0.1)',
+              border: '1px solid rgba(249, 115, 22, 0.25)',
+              padding: '4px 8px',
+              borderRadius: 4,
+            }}>
+              {Number(loadWeightLbs) > 40000
+                ? 'Load > 40k lbs: 35–44 mph winds elevate to Severe'
+                : 'Load > 30k lbs: 45–54 mph winds elevate to No Travel'}
+            </div>
+          )}
+        </div>
+
+        {/* Sampling Interval Selector */}
+        <div>
+          <label className="input-label">Weather Sampling Interval</label>
+          <div className="segmented-control">
+            {[
+              { val: 10, label: 'Every 10 mi' },
+              { val: 25, label: 'Every 25 mi' },
+              { val: 50, label: 'Every 50 mi' },
+            ].map((opt) => (
+              <button
+                key={opt.val}
+                type="button"
+                className={`segmented-button ${Number(samplingIntervalMiles) === opt.val ? 'active' : ''}`}
+                onClick={() => setSamplingIntervalMiles(opt.val)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={() => onCalculate()}
+          disabled={isLoading || !origin || !destination}
+          style={{ marginTop: 4 }}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 size={16} className="spin-animation" />
+              <span>Analyzing Weather Checkpoints...</span>
+            </>
+          ) : (
+            <>
+              <Navigation size={16} />
+              <span>Calculate Safe Routes</span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

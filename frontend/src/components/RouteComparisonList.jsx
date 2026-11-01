@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, ChevronRight } from 'lucide-react';
+import { ShieldCheck, Check, Clock, Route as RouteIcon } from 'lucide-react';
 
 export default function RouteComparisonList({
   routes,
@@ -10,8 +10,13 @@ export default function RouteComparisonList({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8' }}>
-        Route Options (Ranked by Safety)
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#f8fafc' }}>
+          Evaluated Route Options
+        </span>
+        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+          Sorted by safety &amp; duration
+        </span>
       </div>
 
       {routes.map((route) => {
@@ -33,37 +38,38 @@ export default function RouteComparisonList({
             onClick={() => onSelectRoute(route.id)}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{
                   fontSize: '0.72rem',
                   fontWeight: 700,
-                  padding: '2px 6px',
+                  padding: '2px 7px',
                   borderRadius: 4,
                   background: isRecommended ? '#10b981' : '#334155',
-                  color: '#fff',
+                  color: '#ffffff',
                 }}>
                   #{route.rank}
                 </span>
-                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: isSelected ? '#38bdf8' : '#fff' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isSelected ? '#38bdf8' : '#ffffff' }}>
                   {route.name}
                 </span>
               </div>
 
-              {isRecommended && (
-                <span style={{
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
+              {isRecommended ? (
+                <span className="route-badge" style={{
+                  background: 'rgba(16, 185, 129, 0.18)',
                   color: '#34d399',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 3,
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
                 }}>
                   <ShieldCheck size={13} /> Recommended
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                  Option {route.rank}
                 </span>
               )}
             </div>
 
-            <div className="risk-bar">
+            <div className="risk-bar" title="Corridor Hazard Breakdown">
               {lowPct > 0 && <div className="risk-seg-low" style={{ width: `${lowPct}%` }} />}
               {modPct > 0 && <div className="risk-seg-mod" style={{ width: `${modPct}%` }} />}
               {highPct > 0 && <div className="risk-seg-high" style={{ width: `${highPct}%` }} />}
@@ -88,12 +94,12 @@ export default function RouteComparisonList({
               </div>
               <div className="stat-item">
                 <span className="stat-label">Avg Risk</span>
-                <span className="stat-value">{stats.average_risk} / 5</span>
+                <span className="stat-value">{stats.average_risk} <span style={{ fontSize: '0.65rem', color: '#64748b' }}>/ 5</span></span>
               </div>
             </div>
 
             {route.recommendation_notes && route.recommendation_notes.length > 0 && (
-              <div style={{ marginTop: 6, fontSize: '0.74rem', color: '#94a3b8' }}>
+              <div style={{ marginTop: 8, fontSize: '0.74rem', color: '#94a3b8', lineHeight: '1.4' }}>
                 {route.recommendation_notes[0]}
               </div>
             )}
