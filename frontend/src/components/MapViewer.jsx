@@ -50,7 +50,7 @@ function MapResizeHandler({ isMobileView }) {
   return null;
 }
 
-function WeatherHeatmapLayer({ corridorMatrix, forecastHour, showHeatmap }) {
+function WeatherHeatmapLayer({ corridorMatrix, forecastHour, showHeatmap, heatmapMetric = 'risk' }) {
   const map = useMap();
   const heatLayerRef = useRef(null);
 
@@ -67,7 +67,17 @@ function WeatherHeatmapLayer({ corridorMatrix, forecastHour, showHeatmap }) {
     for (const pt of corridorMatrix) {
       const hData = pt.forecast ? pt.forecast[forecastHour] : null;
       if (!hData) continue;
-      const intensity = (hData.numeric_risk || 1) / 5.0;
+      let intensity = 0.2;
+      if (heatmapMetric === 'wind') {
+        intensity = Math.min(1.0, (hData.wind_mph || 0) / 60.0);
+      } else if (heatmapMetric === 'precip') {
+        const pTotal = (hData.rain_in_hr || 0) + (hData.snow_in_hr || 0);
+        intensity = Math.min(1.0, pTotal / 1.0);
+      } else if (heatmapMetric === 'temp') {
+        intensity = Math.min(1.0, Math.max(0.1, (hData.temp_f || 60) / 100.0));
+      } else {
+        intensity = (hData.numeric_risk || 1) / 5.0;
+      }
       points.push([pt.lat, pt.lon, Math.max(0.15, intensity)]);
     }
 
@@ -80,7 +90,13 @@ function WeatherHeatmapLayer({ corridorMatrix, forecastHour, showHeatmap }) {
           maxZoom: 10,
           max: 1.0,
           minOpacity: 0.35,
-          gradient: {
+          gradient: heatmapMetric === 'temp' ? {
+            0.15: '#38bdf8',
+            0.35: '#60a5fa',
+            0.6: '#10b981',
+            0.8: '#f59e0b',
+            1.0: '#ef4444',
+          } : {
             0.15: '#10b981',
             0.4: '#f59e0b',
             0.65: '#f97316',
@@ -101,7 +117,31 @@ function WeatherHeatmapLayer({ corridorMatrix, forecastHour, showHeatmap }) {
         heatLayerRef.current = null;
       }
     };
-  }, [corridorMatrix, forecastHour, showHeatmap, map]);
+  }, [corridorMatrix, forecastHour, showHeatmap, heatmapMetric, map]);
+
+  return null;
+}
+
+function SelectedCheckpointController({ selectedCheckpoint, markerRefs }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!selectedCheckpoint || selectedCheckpoint.lat === undefined || selectedCheckpoint.lon === undefined) return;
+    try {
+      map.flyTo([selectedCheckpoint.lat, selectedCheckpoint.lon], Math.max(map.getZoom(), 9), {
+        duration: 0.8,
+      });
+      const timer = setTimeout(() => {
+        const marker = markerRefs.current[selectedCheckpoint.index];
+        if (marker) {
+          marker.openPopup();
+        }
+      }, 350);
+      return () => clearTimeout(timer);
+    } catch {
+      // ignore
+    }
+  }, [selectedCheckpoint, map, markerRefs]);
 
   return null;
 }
@@ -131,14 +171,15 @@ const createPinIcon = (letter, color) =>
     iconAnchor: [14, 14],
   });
 
-const createCheckpointIcon = (risk) => {
+const createCheckpointIcon = (risk, isSelected = false) => {
   let bgColor = '#10b981';
   if (risk === 'Moderate') bgColor = '#f59e0b';
   else if (risk === 'High') bgColor = '#f97316';
   else if (risk === 'Severe') bgColor = '#ef4444';
   else if (risk === 'No Travel') bgColor = '#c084fc';
 
-  const size = (risk === 'Severe' || risk === 'No Travel') ? 16 : 12;
+  const baseSize = (risk === 'Severe' || risk === 'No Travel') ? 16 : 12;
+  const size = isSelected ? baseSize + 6 : baseSize;
 
   return L.divIcon({
     className: 'custom-cp-icon',
@@ -148,8 +189,9 @@ const createCheckpointIcon = (risk) => {
         height: ${size}px;
         border-radius: 50%;
         background: ${bgColor};
-        border: 2px solid #ffffff;
-        box-shadow: 0 0 8px ${bgColor};
+        border: ${isSelected ? '3px solid #38bdf8' : '2px solid #ffffff'};
+        box-shadow: ${isSelected ? `0 0 16px #38bdf8, 0 0 8px ${bgColor}` : `0 0 8px ${bgColor}`};
+        transition: all 0.2s ease;
       ">
       </div>
     `,
@@ -162,15 +204,23 @@ export default function MapViewer({
   routes,
   selectedRouteId,
   onSelectRoute,
+  selectedCheckpoint,
+  onSelectCheckpoint,
   corridorMatrix,
   forecastHour,
   showHeatmap,
+  heatmapMetric = 'risk',
   origin,
   destination,
   isMobileView,
 }) {
   const mapRef = useRef(null);
+  const markerRefs = useRef({});
   const selectedRoute = routes?.find((r) => r.id === selectedRouteId) || routes?.[0];
+
+  useEffect(() => {
+    markerRefs.current = {};
+  }, [selectedRouteId]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !L.heatLayer) {
@@ -186,6 +236,35 @@ export default function MapViewer({
       case 'Moderate': return '#f59e0b';
       default: return '#10b981';
     }
+  };
+
+  const getMetricColor = (hData, metric) => {
+    if (!hData) return '#10b981';
+    if (metric === 'wind') {
+      const w = hData.wind_mph || 0;
+      if (w >= 55) return '#c084fc';
+      if (w >= 45) return '#ef4444';
+      if (w >= 35) return '#f97316';
+      if (w >= 25) return '#f59e0b';
+      return '#10b981';
+    }
+    if (metric === 'precip') {
+      const p = (hData.rain_in_hr || 0) + (hData.snow_in_hr || 0);
+      if (p >= 1.0) return '#c084fc';
+      if (p >= 0.5) return '#ef4444';
+      if (p >= 0.25) return '#f59e0b';
+      if (p > 0.01) return '#38bdf8';
+      return '#10b981';
+    }
+    if (metric === 'temp') {
+      const t = hData.temp_f || 60;
+      if (t > 85) return '#ef4444';
+      if (t > 70) return '#f59e0b';
+      if (t > 50) return '#10b981';
+      if (t > 32) return '#60a5fa';
+      return '#38bdf8';
+    }
+    return getRiskColor(hData.final_risk);
   };
 
   return (
@@ -206,18 +285,23 @@ export default function MapViewer({
 
         <MapBoundsUpdater routes={routes} selectedRoute={selectedRoute} />
         <MapResizeHandler isMobileView={isMobileView} />
+        <SelectedCheckpointController
+          selectedCheckpoint={selectedCheckpoint}
+          markerRefs={markerRefs}
+        />
 
         <WeatherHeatmapLayer
           corridorMatrix={corridorMatrix}
           forecastHour={forecastHour}
           showHeatmap={showHeatmap}
+          heatmapMetric={heatmapMetric}
         />
 
         {showHeatmap &&
           corridorMatrix?.map((pt, idx) => {
             const hData = pt.forecast ? pt.forecast[forecastHour] : null;
             if (!hData) return null;
-            const color = getRiskColor(hData.final_risk);
+            const color = getMetricColor(hData, heatmapMetric);
             const isSevere = hData.final_risk === 'Severe' || hData.final_risk === 'No Travel';
             return (
               <CircleMarker
@@ -273,17 +357,25 @@ export default function MapViewer({
           );
         })}
 
-        {selectedRoute?.checkpoints?.map((cp) => (
-          <Marker
-            key={`cp_${cp.index}`}
-            position={[cp.lat, cp.lon]}
-            icon={createCheckpointIcon(cp.final_risk)}
-          >
-            <Popup>
-              <div className="popup-container">
-                <div className="popup-title">
-                  Mile {cp.distance_from_start_miles} &bull; {cp.eta_formatted}
-                </div>
+        {selectedRoute?.checkpoints?.map((cp) => {
+          const isSelectedCheckpoint = selectedCheckpoint?.index === cp.index;
+          return (
+            <Marker
+              key={`cp_${cp.index}`}
+              ref={(el) => {
+                if (el) markerRefs.current[cp.index] = el;
+              }}
+              position={[cp.lat, cp.lon]}
+              icon={createCheckpointIcon(cp.final_risk, isSelectedCheckpoint)}
+              eventHandlers={{
+                click: () => onSelectCheckpoint && onSelectCheckpoint(cp),
+              }}
+            >
+              <Popup>
+                <div className="popup-container">
+                  <div className="popup-title">
+                    Mile {cp.distance_from_start_miles} &bull; {cp.eta_formatted}
+                  </div>
                 <div className="popup-item">
                   <span>Risk Level:</span>
                   <strong style={{ color: getRiskColor(cp.final_risk) }}>
@@ -316,7 +408,8 @@ export default function MapViewer({
               </div>
             </Popup>
           </Marker>
-        ))}
+        );
+      })}
 
         {origin && origin.lat && origin.lon && (
           <Marker position={[origin.lat, origin.lon]} icon={createPinIcon('A', '#10b981')}>

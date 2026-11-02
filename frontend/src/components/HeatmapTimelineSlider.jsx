@@ -6,6 +6,8 @@ export default function HeatmapTimelineSlider({
   setForecastHour,
   showHeatmap,
   setShowHeatmap,
+  heatmapMetric = 'risk',
+  setHeatmapMetric,
   departureTime,
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -37,8 +39,72 @@ export default function HeatmapTimelineSlider({
     }
   };
 
+  const renderLegend = () => {
+    if (heatmapMetric === 'wind') {
+      return (
+        <>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#10b981' }} />&lt;25 mph</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#f59e0b' }} />25–34 mph</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#f97316' }} />35–44 mph</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#ef4444' }} />45–54 mph</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#c084fc' }} />&ge;55 mph</div>
+        </>
+      );
+    }
+    if (heatmapMetric === 'precip') {
+      return (
+        <>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#10b981' }} />Dry</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#38bdf8' }} />Light (0.1")</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#f59e0b' }} />Mod (0.25")</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#ef4444' }} />Heavy (0.5")</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#c084fc' }} />Torrential (&gt;1")</div>
+        </>
+      );
+    }
+    if (heatmapMetric === 'temp') {
+      return (
+        <>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#38bdf8' }} />&lt;32&deg;F</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#60a5fa' }} />32–50&deg;F</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#10b981' }} />50–70&deg;F</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#f59e0b' }} />70–85&deg;F</div>
+          <div className="legend-item"><span className="legend-swatch" style={{ background: '#ef4444' }} />&gt;85&deg;F</div>
+        </>
+      );
+    }
+    return (
+      <>
+        <div className="legend-item"><span className="legend-swatch" style={{ background: '#10b981' }} />Low</div>
+        <div className="legend-item"><span className="legend-swatch" style={{ background: '#f59e0b' }} />Moderate</div>
+        <div className="legend-item"><span className="legend-swatch" style={{ background: '#f97316' }} />High</div>
+        <div className="legend-item"><span className="legend-swatch" style={{ background: '#ef4444' }} />Severe</div>
+        <div className="legend-item"><span className="legend-swatch" style={{ background: '#c084fc' }} />No Travel</div>
+      </>
+    );
+  };
+
   return (
     <div className="heatmap-dock">
+      {/* Metric Selector Pills */}
+      <div className="heatmap-metric-bar">
+        {[
+          { key: 'risk', label: 'Risk Index' },
+          { key: 'wind', label: 'Wind Speed' },
+          { key: 'precip', label: 'Precipitation' },
+          { key: 'temp', label: 'Temperature' },
+        ].map((m) => (
+          <button
+            key={m.key}
+            type="button"
+            className={`metric-chip ${heatmapMetric === m.key ? 'active' : ''}`}
+            onClick={() => setHeatmapMetric && setHeatmapMetric(m.key)}
+          >
+            {m.label}
+          </button>
+        ))}
+      </div>
+
       <div className="heatmap-dock-row">
         <button
           type="button"
@@ -52,7 +118,7 @@ export default function HeatmapTimelineSlider({
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
             <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#f8fafc' }}>
-              Corridor Weather Forecast: <span style={{ color: '#38bdf8' }}>+{forecastHour}h</span>
+              Corridor Forecast: <span style={{ color: '#38bdf8' }}>+{forecastHour}h</span>
               <span style={{ color: '#94a3b8', marginLeft: 6, fontWeight: 400 }}>({formatForecastTime()})</span>
             </span>
 
@@ -86,11 +152,7 @@ export default function HeatmapTimelineSlider({
       </div>
 
       <div className="heatmap-legend">
-        <div className="legend-item"><span className="legend-swatch" style={{ background: '#10b981' }} />Low</div>
-        <div className="legend-item"><span className="legend-swatch" style={{ background: '#f59e0b' }} />Moderate</div>
-        <div className="legend-item"><span className="legend-swatch" style={{ background: '#f97316' }} />High</div>
-        <div className="legend-item"><span className="legend-swatch" style={{ background: '#ef4444' }} />Severe</div>
-        <div className="legend-item"><span className="legend-swatch" style={{ background: '#c084fc' }} />No Travel</div>
+        {renderLegend()}
       </div>
     </div>
   );

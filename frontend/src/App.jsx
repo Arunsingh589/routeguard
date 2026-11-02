@@ -6,7 +6,6 @@ import CheckpointTimeline from './components/CheckpointTimeline';
 import HeatmapTimelineSlider from './components/HeatmapTimelineSlider';
 import MapViewer from './components/MapViewer';
 import { fetchPresets, analyzeRoutes } from './api';
-import { SlidersHorizontal, Map as MapIcon } from 'lucide-react';
 
 export default function App() {
   const [presets, setPresets] = useState([]);
@@ -43,6 +42,7 @@ export default function App() {
 
   const [forecastHour, setForecastHour] = useState(0);
   const [showHeatmap, setShowHeatmap] = useState(true);
+  const [heatmapMetric, setHeatmapMetric] = useState('risk');
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -168,10 +168,16 @@ export default function App() {
           <MapViewer
             routes={analysisResults?.routes}
             selectedRouteId={selectedRouteId}
-            onSelectRoute={(id) => setSelectedRouteId(id)}
+            onSelectRoute={(id) => {
+              setSelectedRouteId(id);
+              setSelectedCheckpoint(null);
+            }}
+            selectedCheckpoint={selectedCheckpoint}
+            onSelectCheckpoint={(cp) => setSelectedCheckpoint(cp)}
             corridorMatrix={analysisResults?.corridor_forecast_matrix}
             forecastHour={forecastHour}
             showHeatmap={showHeatmap}
+            heatmapMetric={heatmapMetric}
             origin={origin}
             destination={destination}
             isMobileView={mobileTab === 'map'}
@@ -183,38 +189,11 @@ export default function App() {
               setForecastHour={setForecastHour}
               showHeatmap={showHeatmap}
               setShowHeatmap={setShowHeatmap}
+              heatmapMetric={heatmapMetric}
+              setHeatmapMetric={setHeatmapMetric}
               departureTime={departureTime}
             />
           )}
-
-          {/* Floating Mobile Pill Switcher */}
-          <div className="mobile-nav-toggle" style={{
-            position: 'absolute',
-            top: 14,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 1000,
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.45)',
-          }}>
-            <button
-              type="button"
-              className="mobile-tab-btn"
-              onClick={() => setMobileTab('routes')}
-              style={{
-                background: 'rgba(13, 20, 36, 0.95)',
-                color: '#38bdf8',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-                padding: '6px 14px',
-                fontSize: '0.74rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-              }}
-            >
-              <SlidersHorizontal size={12} />
-              <span>Trip Options &amp; List</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
